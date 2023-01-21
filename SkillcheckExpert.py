@@ -2,6 +2,7 @@
 from timeit import default_timer as timer
 import pyautogui # for screenshots
 import time # for waiting
+from keyboard import press
 
 class SkillcheckExpert():
     def __init__(self):
@@ -15,6 +16,7 @@ class SkillcheckExpert():
         end = timer()
         # wait for time until skillcheck minus the time we've wasted
         time.sleep(abs(time_until_skillcheck - (end - start)))
+        self._press_enter()
 
     def _time_until_skillcheck(self, filename):
         # returns time until enter key should be pressed
@@ -29,8 +31,8 @@ class SkillcheckExpert():
         screenshot.save(filename)
         return filename
 
-    def _press_enter(self):
+    def _press_space(self):
         # presses the enter key to complete the skillcheck
-        pass
+        press('space')
 
 SkillcheckExpert().assistance_required()
