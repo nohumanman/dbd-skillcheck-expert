@@ -14,17 +14,17 @@ class SkillcheckExpert():
         time_until_skillcheck = self._time_until_skillcheck(filename)
         end = timer()
         # wait for time until skillcheck minus the time we've wasted
-        time.sleep(time_until_skillcheck - (end - start))
+        time.sleep(abs(time_until_skillcheck - (end - start)))
 
     def _time_until_skillcheck(self, filename):
         # returns time until enter key should be pressed
         # this is calculated from the screenshot which
         # contains a red bar and white bar :. image processing
-        pass
+        return 0
 
     def _get_screenshot(self):
         # get screenshot of the screen
-        filename = "this.png"
+        filename = "screenie.png"
         screenshot = pyautogui.screenshot()
         screenshot.save(filename)
         return filename
@@ -32,3 +32,5 @@ class SkillcheckExpert():
     def _press_enter(self):
         # presses the enter key to complete the skillcheck
         pass
+
+SkillcheckExpert().assistance_required()
