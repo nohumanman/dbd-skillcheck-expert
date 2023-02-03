@@ -37,7 +37,7 @@ class SkillcheckExpert():
         # 'cropped' is now normalised circle
         cv2.imwrite("so71416458-straight1.png", rect)
         # get position of red pixels (current skillcheck pos) 
-        mask = cv2.inRange(rect, (18, 6, 175), (27, 14, 185))
+        mask = cv2.inRange(rect, (18, 3, 175), (30, 16, 185))
         coords = cv2.findNonZero(mask)
         red_coord = (coords[0][0][0], coords[0][0][1])
         cv2.circle(rect, red_coord, 10, (255, 255, 0), 1)
@@ -99,11 +99,9 @@ class SkillcheckExpert():
 import keyboard  # using module keyboard
 while True:  # making a loop
     if keyboard.is_pressed('q'):  # if key 'q' is pressed
-        try:
-            print("-----\n\n")
-            SkillcheckExpert().assistance_required()
-        except:
-            pass
+        print("-----\n\n")
+        SkillcheckExpert().assistance_required()
+
 
 
  
