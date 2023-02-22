@@ -14,8 +14,9 @@ class SkillcheckExpert():
 
     def assistance_required(self):
         # the expert is required to do a skillcheck
+        img = cv2.imread("screenie.png")
         start = timer()
-        img = self._get_screenshot()
+        #img = self._get_screenshot()
         time_until_skillcheck = self._time_until_skillcheck(img) 
         # wait for time until skillcheck minus the time we've wasted
         wasted_time = timer()  - start
@@ -34,6 +35,7 @@ class SkillcheckExpert():
         # returns time until enter key should be pressed
         im_crop = self._crop_image_center(im) # crop image to circle
         rect = self._circle_to_rect(im_crop)
+        rect = im_crop
         # 'cropped' is now normalised circle
         cv2.imwrite("so71416458-straight1.png", rect)
         # get position of red pixels (current skillcheck pos) 
@@ -48,15 +50,30 @@ class SkillcheckExpert():
         white_coord = (coords[0][0][0], coords[0][0][1])
         cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
 
+        angle = (self.getAngle(red_coord, (im_crop.shape[0]/2, im_crop.shape[1]/2), white_coord))
+        print(str(angle) + "deg")
+        center = (int(im_crop.shape[0]/2), int(im_crop.shape[1]/2))
+        cv2.circle(rect, center, 5, (255, 255, 0), 10)
+        cv2.line(rect, red_coord, center, (255, 255, 255), 4)
+        cv2.line(rect, white_coord, center, (255, 255, 255), 4)
         # get distance between red and white pixels on the horizontal axis
         distance = math.sqrt((red_coord[0] - white_coord[0])**2)
         print("Distance: " + str(distance))
         time_to_wait = distance * 0.00226
         # 167 = 0.33 seconds
         # 73 = 0.165 seconds
+
+        # 180 deg = 0.33 seconds
+        time_to_wait = angle * (0.33 / 180)
+        print(str(time_to_wait) + " sec")
         cv2.imwrite("so71416458-straight2.png", rect)
         return time_to_wait
   
+    def getAngle(self, a, b, c):
+        # taken from https://manivannan-ai.medium.com/find-the-angle-between-three-points-from-2d-using-python-348c513e2cd
+        ang = math.degrees(math.atan2(c[1]-b[1], c[0]-b[0]) - math.atan2(a[1]-b[1], a[0]-b[0]))
+        return ang + 360 if ang < 0 else ang
+
     def _circle_to_rect(self, im):
         size = im.shape[0]  # assumes square image
         outer_radius = size // 2
