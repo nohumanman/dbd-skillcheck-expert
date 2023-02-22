@@ -14,9 +14,8 @@ class SkillcheckExpert():
 
     def assistance_required(self):
         # the expert is required to do a skillcheck
-        img = cv2.imread("screenie.png")
+        img = self._get_screenshot()
         start = timer()
-        #img = self._get_screenshot()
         time_until_skillcheck = self._time_until_skillcheck(img) 
         # wait for time until skillcheck minus the time we've wasted
         wasted_time = timer()  - start
@@ -43,29 +42,19 @@ class SkillcheckExpert():
         coords = cv2.findNonZero(mask)
         red_coord = (coords[0][0][0], coords[0][0][1])
         cv2.circle(rect, red_coord, 10, (255, 255, 0), 1)
-
         # get position of white pixels (skillcheck aim)
         mask = cv2.inRange(rect, (200, 200, 200), (255, 255, 255))
         coords = cv2.findNonZero(mask)
         white_coord = (coords[0][0][0], coords[0][0][1])
         cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
-
         angle = (self.getAngle(red_coord, (im_crop.shape[0]/2, im_crop.shape[1]/2), white_coord))
-        print(str(angle) + "deg")
+        print("~" + str(round(angle)) + "deg")
         center = (int(im_crop.shape[0]/2), int(im_crop.shape[1]/2))
         cv2.circle(rect, center, 5, (255, 255, 0), 10)
         cv2.line(rect, red_coord, center, (255, 255, 255), 4)
         cv2.line(rect, white_coord, center, (255, 255, 255), 4)
-        # get distance between red and white pixels on the horizontal axis
-        distance = math.sqrt((red_coord[0] - white_coord[0])**2)
-        print("Distance: " + str(distance))
-        time_to_wait = distance * 0.00226
-        # 167 = 0.33 seconds
-        # 73 = 0.165 seconds
-
         # 180 deg = 0.33 seconds
-        time_to_wait = angle * (0.33 / 180)
-        print(str(time_to_wait) + " sec")
+        time_to_wait = angle * (0.16 / 90)
         cv2.imwrite("so71416458-straight2.png", rect)
         return time_to_wait
   
@@ -109,7 +98,6 @@ class SkillcheckExpert():
         return img_bgr
 
     def _press_space(self):
-        print("HERE")
         # presses the enter key to complete the skillcheck
         press('space')
 
