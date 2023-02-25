@@ -59,14 +59,11 @@ class SkillcheckExpert():
         cv2.circle(rect, red_coord, 10, (255, 255, 0), 1)
         mask = cv2.inRange(rect, (200, 200, 200), (255, 255, 255))
         contours, hierarchy = cv2.findContours(image=mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
-        largest_cnt = None
-        for cnt in contours:
-            if largest_cnt is None:
-                largest_cnt = cnt
-            elif cv2.contourArea(cnt) > cv2.contourArea(largest_cnt):
-                largest_cnt = cnt
-        white_coord =largest_cnt[0][0]
+        c = max(contours, key = cv2.contourArea)
+        x,y,w,h = cv2.boundingRect(c)
+        white_coord = (x,y)
         cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
+        cv2.imwrite("contours.png", rect)
         angle = (self.getAngle(red_coord, (im_crop.shape[0]/2, im_crop.shape[1]/2), white_coord))
         print("~" + str(round(angle)) + "deg")
         center = (int(im_crop.shape[0]/2), int(im_crop.shape[1]/2))
@@ -74,7 +71,7 @@ class SkillcheckExpert():
         cv2.line(rect, red_coord, center, (255, 255, 255), 4)
         cv2.line(rect, white_coord, center, (255, 255, 255), 4)
         # 180 deg = 0.33 seconds
-        time_to_wait = angle * (0.17 / 90)
+        time_to_wait = angle * (0.165 / 90)
         #cv2.imwrite("so71416458-straight2.png", rect)
         return time_to_wait
 
@@ -112,8 +109,10 @@ class SkillcheckExpert():
     def _get_screenshot(self):
         # get screenshot of the screen
         with mss() as sct:
+            time_A = time.time()
             sct_image = sct.grab(sct.monitors[2])
-            time_of_shot = time.time()
+            time_B = time.time()
+            time_of_shot = time.time() + ((time_B - time_A) / 2)
         img = Image.frombytes("RGB", sct_image.size, sct_image.bgra, "raw", "BGRX")
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         return img_bgr, time_of_shot
