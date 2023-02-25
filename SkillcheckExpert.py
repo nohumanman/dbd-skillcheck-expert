@@ -21,7 +21,8 @@ class SkillcheckExpert():
 
     def assistance_required(self):
         # the expert is required to do a skillcheck
-        img, start = self._get_screenshot()
+        start = time.time()
+        img, start2 = self._get_screenshot()
         time_until_skillcheck = self._time_until_skillcheck(img)
         if time_until_skillcheck == None:
             print("ACCEPTED ERROR!")
@@ -32,7 +33,7 @@ class SkillcheckExpert():
         if time_to_wait < 0:
             time_to_wait = 0
             print("Rendering took too long! Skillcheck missed!")
-        self.custom_sleep(time_to_wait)
+        time.sleep(time_to_wait)
         self._press_space()
         cv2.imwrite("this.png", img)
         print("Time wasted: " + str(wasted_time))
@@ -44,7 +45,7 @@ class SkillcheckExpert():
         im_crop = self._crop_image_center(im) # crop image to circle
         rect = self._circle_to_rect(im_crop)
         rect = im_crop
-        cv2.rectangle(rect, (40, 100), (250, 200), (0, 0, 0), -1)
+        cv2.rectangle(rect, (55, 100), (245, 200), (0, 0, 0), -1)
         # 'cropped' is now normalised circle
         #cv2.imwrite("so71416458-straight1.png", rect)
         # get position of red pixels (current skillcheck pos) 
@@ -62,8 +63,8 @@ class SkillcheckExpert():
         c = max(contours, key = cv2.contourArea)
         x,y,w,h = cv2.boundingRect(c)
         white_coord = (x,y)
-        cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
-        cv2.imwrite("contours.png", rect)
+        #cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
+        #cv2.imwrite("contours.png", rect)
         angle = (self.getAngle(red_coord, (im_crop.shape[0]/2, im_crop.shape[1]/2), white_coord))
         print("~" + str(round(angle)) + "deg")
         center = (int(im_crop.shape[0]/2), int(im_crop.shape[1]/2))
@@ -109,10 +110,8 @@ class SkillcheckExpert():
     def _get_screenshot(self):
         # get screenshot of the screen
         with mss() as sct:
-            time_A = time.time()
             sct_image = sct.grab(sct.monitors[2])
-            time_B = time.time()
-            time_of_shot = time.time() + ((time_B - time_A) / 2)
+            time_of_shot = time.time()
         img = Image.frombytes("RGB", sct_image.size, sct_image.bgra, "raw", "BGRX")
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         return img_bgr, time_of_shot
