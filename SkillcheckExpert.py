@@ -14,6 +14,7 @@ class SkillcheckExpert():
 
     def custom_sleep(self, amount):
         start_time = time.time()
+        
         while True:
             if (time.time()-start_time>amount):
                 return
@@ -45,19 +46,26 @@ class SkillcheckExpert():
         rect = im_crop
         cv2.rectangle(rect, (40, 100), (250, 200), (0, 0, 0), -1)
         # 'cropped' is now normalised circle
-        cv2.imwrite("so71416458-straight1.png", rect)
+        #cv2.imwrite("so71416458-straight1.png", rect)
         # get position of red pixels (current skillcheck pos) 
         mask = cv2.inRange(rect, (14, 3, 175), (30, 16, 185))
         coords = cv2.findNonZero(mask)
         if coords is None:
+            cv2.imwrite("error-img.png", rect)
             return None
         red_coord = (coords[-1][0][0], coords[-1][0][1])
         if red_coord == None:
             return None
         cv2.circle(rect, red_coord, 10, (255, 255, 0), 1)
         mask = cv2.inRange(rect, (200, 200, 200), (255, 255, 255))
-        coords = cv2.findNonZero(mask)
-        white_coord = (coords[0][0][0], coords[0][0][1])
+        contours, hierarchy = cv2.findContours(image=mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
+        largest_cnt = None
+        for cnt in contours:
+            if largest_cnt is None:
+                largest_cnt = cnt
+            elif cv2.contourArea(cnt) > cv2.contourArea(largest_cnt):
+                largest_cnt = cnt
+        white_coord =largest_cnt[0][0]
         cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
         angle = (self.getAngle(red_coord, (im_crop.shape[0]/2, im_crop.shape[1]/2), white_coord))
         print("~" + str(round(angle)) + "deg")
@@ -66,13 +74,10 @@ class SkillcheckExpert():
         cv2.line(rect, red_coord, center, (255, 255, 255), 4)
         cv2.line(rect, white_coord, center, (255, 255, 255), 4)
         # 180 deg = 0.33 seconds
-        time_to_wait = angle * (0.165 / 90)
-        # because it uses the small bit
-        # of the check not the thick bit
-        time_to_wait -= 0.08
-        cv2.imwrite("so71416458-straight2.png", rect)
+        time_to_wait = angle * (0.17 / 90)
+        #cv2.imwrite("so71416458-straight2.png", rect)
         return time_to_wait
-  
+
     def getAngle(self, a, b, c):
         # taken from https://manivannan-ai.medium.com/find-the-angle-between-three-points-from-2d-using-python-348c513e2cd
         ang = math.degrees(math.atan2(c[1]-b[1], c[0]-b[0]) - math.atan2(a[1]-b[1], a[0]-b[0]))
@@ -108,7 +113,7 @@ class SkillcheckExpert():
         # get screenshot of the screen
         with mss() as sct:
             sct_image = sct.grab(sct.monitors[2])
-        time_of_shot = time.time()
+            time_of_shot = time.time()
         img = Image.frombytes("RGB", sct_image.size, sct_image.bgra, "raw", "BGRX")
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         return img_bgr, time_of_shot
