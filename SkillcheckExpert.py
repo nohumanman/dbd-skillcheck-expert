@@ -1,4 +1,4 @@
-# timeit much more accurate than time.time()
+# timeit much more accurate than timer()
 from timeit import default_timer as timer
 from mss import mss
 import time # for waiting
@@ -13,67 +13,57 @@ class SkillcheckExpert():
         pass
 
     def custom_sleep(self, amount):
-        start_time = time.time()
-        
+        start_time = timer()
         while True:
-            if (time.time()-start_time>amount):
+            if (timer()-start_time>amount):
                 return
 
     def assistance_required(self):
         # the expert is required to do a skillcheck
-        start = time.time()
-        img, start2 = self._get_screenshot()
+        start = timer()
+        img = self._get_screenshot()
         time_until_skillcheck = self._time_until_skillcheck(img)
-        if time_until_skillcheck == None:
-            print("ACCEPTED ERROR!")
-            return
         # wait for time until skillcheck minus the time we've wasted
-        wasted_time = time.time()  - start
+        wasted_time = timer()  - start
         time_to_wait = time_until_skillcheck - wasted_time
+        s1 = timer()
         if time_to_wait < 0:
             time_to_wait = 0
             print("Rendering took too long! Skillcheck missed!")
-        time.sleep(time_to_wait)
+        self.custom_sleep(round(time_to_wait*1000)/1000)
         self._press_space()
+        s2 = timer()
+        
         cv2.imwrite("this.png", img)
-        print("Time wasted: " + str(wasted_time))
-        print("Time until skillcheck: " + str(time_until_skillcheck))
-        print("Time to wait: " + str(time_to_wait))
+        print("Time wasted:           " + str(round(wasted_time*1000)/1000))
+        print("Time until skillcheck: " + str(round(time_until_skillcheck*1000)/1000))
+        print("Time to wait:          " + str(round(time_to_wait*1000)/1000))
+        print("Time actually waited:  " + str(round((s2-s1)*1000)/1000))
 
     def _time_until_skillcheck(self, im):
         # returns time until enter key should be pressed
-        im_crop = self._crop_image_center(im) # crop image to circle
-        rect = self._circle_to_rect(im_crop)
-        rect = im_crop
-        cv2.rectangle(rect, (55, 100), (245, 200), (0, 0, 0), -1)
-        # 'cropped' is now normalised circle
-        #cv2.imwrite("so71416458-straight1.png", rect)
-        # get position of red pixels (current skillcheck pos) 
-        mask = cv2.inRange(rect, (14, 3, 175), (30, 16, 185))
-        coords = cv2.findNonZero(mask)
-        if coords is None:
-            cv2.imwrite("error-img.png", rect)
-            return None
-        red_coord = (coords[-1][0][0], coords[-1][0][1])
-        if red_coord == None:
-            return None
-        cv2.circle(rect, red_coord, 10, (255, 255, 0), 1)
+        rect = self._crop_image_center(im) # crop image to circle
+        # find red coordinate
+        mask = cv2.inRange(rect, (5, 1, 170), (30, 16, 255))
+        contours, hierarchy = cv2.findContours(image=mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
+        c = max(contours, key = cv2.contourArea)
+        x,y,w,h = cv2.boundingRect(c)
+        red_coord = (x,y)
+        # find white coordinate
         mask = cv2.inRange(rect, (200, 200, 200), (255, 255, 255))
         contours, hierarchy = cv2.findContours(image=mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
         c = max(contours, key = cv2.contourArea)
         x,y,w,h = cv2.boundingRect(c)
         white_coord = (x,y)
-        #cv2.circle(rect, white_coord, 10, (255, 255, 0), 1)
-        #cv2.imwrite("contours.png", rect)
-        angle = (self.getAngle(red_coord, (im_crop.shape[0]/2, im_crop.shape[1]/2), white_coord))
+        # find angle
+        angle = self.getAngle(red_coord, (rect.shape[0]/2, rect.shape[1]/2), white_coord)
         print("~" + str(round(angle)) + "deg")
-        center = (int(im_crop.shape[0]/2), int(im_crop.shape[1]/2))
+        center = (int(rect.shape[0]/2), int(rect.shape[1]/2))
         cv2.circle(rect, center, 5, (255, 255, 0), 10)
         cv2.line(rect, red_coord, center, (255, 255, 255), 4)
         cv2.line(rect, white_coord, center, (255, 255, 255), 4)
-        # 180 deg = 0.33 seconds
-        time_to_wait = angle * (0.165 / 90)
-        #cv2.imwrite("so71416458-straight2.png", rect)
+        # 360 deg = 0.66 seconds
+        time_to_wait = (angle/360) * 0.9
         return time_to_wait
 
     def getAngle(self, a, b, c):
@@ -111,10 +101,9 @@ class SkillcheckExpert():
         # get screenshot of the screen
         with mss() as sct:
             sct_image = sct.grab(sct.monitors[2])
-            time_of_shot = time.time()
         img = Image.frombytes("RGB", sct_image.size, sct_image.bgra, "raw", "BGRX")
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        return img_bgr, time_of_shot
+        return img_bgr
 
     def _press_space(self):
         # presses the enter key to complete the skillcheck
